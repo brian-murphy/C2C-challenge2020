@@ -34,7 +34,7 @@ for holding in portfolio.holdings:
   price = get_price(holding.security)
   value = int(holding.shares) * price
   total += value
-print("Total: " + str(total))
+print("Total: " + "{:.2f}".format(total))
 
 historical_total = 0
 
@@ -43,9 +43,15 @@ for holding in portfolio.holdings:
   price = get_historical_price(holding.security, portfolio.openDate)
   value = int(holding.shares) * price
   historical_total += value
-print("Historical total: " + str(historical_total))
-print("Gains: " + str(total-historical_total))
+print("Historical total: " + "{:.2f}".format(historical_total))
+print("Gains: " + "{:.2f}".format(total-historical_total))
+
 # Compare performance to SP50
+historical_benchmark_price = get_historical_price("^GSPC", portfolio.openDate)
+benchmark_shares = historical_total / historical_benchmark_price
+benchmark_earnings = (get_price("^GSPC") - historical_benchmark_price) * benchmark_shares 
+print("Benchmark Earnings: " + "{:.2f}".format(benchmark_earnings))
+
 # Compare to treasury bonds
 
 
