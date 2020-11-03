@@ -1,12 +1,13 @@
-from datetime import date
+from datetime import date, timedelta
+import yfinance as yf
 
 class Holding:
-  def __init__(self, security: str, shares: int):
-    self.security = security
-    self.shares = shares
+  def __init__(self, symbol: str, shares: str):
+    self.symbol:str = symbol
+    self.shares:int = int(shares.strip())
   
   def __str__(self):
-    return self.security.ljust(8, " ")  + self.shares
+    return self.symbol.ljust(8, " ")  + str(self.shares) + "\n"
 
 
 class Portfolio:
@@ -27,3 +28,9 @@ class Portfolio:
       string += str(holding)
     return string
 
+
+def get_price(symbol):
+  priceDate = date.today() - timedelta(days=10)
+  ticker = yf.Ticker(symbol)
+  history = ticker.history(start=priceDate)
+  return round(history[-1:]["Close"][0],2)
