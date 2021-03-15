@@ -60,6 +60,8 @@ class Portfolio:
   """
   def __str__(self):
     string = "Portfolio: \n"
+    if len(self.holdings) == 0:
+      return string + "<empty>\n"
     for holding in self.holdings.keys():
       string += holding + " " + str(self.holdings[holding]) + "\n"
     return string
@@ -72,10 +74,8 @@ def parse_portfolio(filepath):
   with open(filepath) as fp:
     lines = fp.readlines()
     for line in lines:
-      print(line)
       # TO DO: parse the file lines and add holdings to the portfolio
-      row = line.split(",")
-      portfolio.add_stock_position(row[0], row[1])
+      pass
   return portfolio
 
 
