@@ -1,26 +1,30 @@
 """
+WARNING: You shouldn't need to touch this file for the sake of the labs
+
 This module was tested on python3, but I think it should be easily convertible
 to python2.x if necessary. You'll need to install the 'requests' module through
 pip.
 """
 
 import requests
-from portfolio import Portfolio, Holding, get_price, get_historical_price
-from lab1 import portfolio_value
+from lab1 import Portfolio
+from lab2 import portfolio_value
 from datetime import date
+import yfinance as yf
+import os
 
 filepath = 'portfolio.csv'
-validation_portfolio = Portfolio(date(2020,1,2))
+validation_portfolio = Portfolio()
 validation_returns = 0.0
 validation_benchmark_returns = 0.0
 with open(filepath) as fp:
   lines = fp.readlines()
   for line in lines:
-    validation_portfolio.add_holding(Holding(*line.split(',')))
+    validation_portfolio.add_stock_position(*line.split(','))
 
 URL = "https://hmresj58ib.execute-api.us-east-1.amazonaws.com/production/trials"
 
-def submit_leaderboard(name, stage, completion):
+def submit_leaderboard(stage, completion):
   """Submits the results of a trial to the leaderboard api for recording.
 
       :param name: The name of the user submitting the trial. This will be used
@@ -41,8 +45,7 @@ def submit_leaderboard(name, stage, completion):
                 previous submissions for this stage.
         * 400 -- Invalid input. This shouldn't appear in general.
   """
-  if not isinstance(name, str):
-    raise TypeError("'name' parameter should be a string")
+  name = os.environ["REPL_OWNER"]
   if not isinstance(stage, int):
     raise TypeError("'stage' parameter should be an integer")
   if not isinstance(completion, str):
@@ -58,62 +61,54 @@ def submit_leaderboard(name, stage, completion):
 
 
 def submit_portfolio(portfolio):
-  if portfolio.openDate != date(2020,1,2):
-    raise Exception("Invalid open date, leave it as date(2020,1,2)")
-  if any(holding.symbol == "goog" and holding.shares == 10 for holding in portfolio.holdings) \
-    and any(holding.symbol == "fds" and holding.shares == 32 for holding in portfolio.holdings) \
-    and any(holding.symbol == "tsla" and holding.shares == 5 for holding in portfolio.holdings) \
-    and any(holding.symbol == "aapl" and holding.shares == 12 for holding in portfolio.holdings):
+  if "goog" in portfolio.holdings and portfolio.holdings["goog"] == 1 \
+    and "fds" in portfolio.holdings and portfolio.holdings["fds"] == 3 \
+    and "tsla" in portfolio.holdings and portfolio.holdings["tsla"] == 5 \
+    and "aapl" in portfolio.holdings and portfolio.holdings["aapl"] == 1:
     print("That's a good portfolio!")
     print(portfolio)
-    print()
     return True
   
+  print("It's definitely missing something. Either that, or it has too much of something else.")
   print(portfolio)
-  print()
-  raise Exception("It's definitely missing something. Either that, or it has too much of something else.")
-  # Mr. Peabody - Pinkalicious and the Pink Drink
+  return False
 
-def submit_portfolio_value(value):
-  total=0
-  for holding in validation_portfolio.holdings:
-    total += int(holding.shares) * get_price(holding.symbol)
-  if(round(value,2) != 29525.85):
-    raise Exception("The value of " + "{:2f}".format(value) + " doesn't add up")
+def get_historical_price(symbol, priceDate):
+  ticker = yf.Ticker(symbol)
+  history = ticker.history(start=priceDate)
+  return round(history["Close"][0],2)
 
-  print("${:,.2f} is a good start! How does it compare?".format(value))
-
-def portfolio_opening_value(portfolio):
+def test_get_portfolio_value(portfolio, date):
   total = 0
-  for holding in portfolio.holdings:
-    total += int(holding.shares) * get_historical_price(holding.symbol, portfolio.openDate)
+  for ticker in portfolio.holdings.keys():
+    total += get_historical_price(ticker, date) * portfolio.holdings[ticker]
   return total
 
-def portfolio_returns(portfolio):
-  return round((portfolio_value(portfolio) / portfolio_opening_value(portfolio) - 1) * 100,2)
+def submit_portfolio_value(testValue, portfolio, date):
+  validationValue = test_get_portfolio_value(portfolio, date)
+  return round(validationValue, 2) == round(testValue, 2)
 
-def submit_portfolio_returns(returns):
-  validation_returns = portfolio_returns(validation_portfolio)
-  if returns != validation_returns:
-    raise Exception("Returns don't match for the portfolio.")
-  print("{:.2f}% returns is great!".format(returns))
+def test_portfolio_returns(portfolio, startDate, endDate):
+  return round((portfolio_value(portfolio, endDate) / portfolio_value(portfolio, startDate) - 1) * 100,2)
 
-def submit_benchmark_returns(returns):
-  benchmark_portfolio = Portfolio(date(2020,1,2))
-  benchmark_portfolio.add_holding(Holding("^GSPC", 1))
-  validation_benchmark_returns = portfolio_returns(benchmark_portfolio)
-  if returns != validation_benchmark_returns:
-    raise Exception("Returns don't match for S&P 500.")
-  print("{:.2f}% returns for your bencmark means your portfolio is performing well!".format(returns))
+def submit_portfolio_returns(testReturns, portfolio: Portfolio, startDate: date, endDate: date):
+  validationReturns = test_portfolio_returns(portfolio, startDate, endDate)
+  if validationReturns == round(testReturns, 2):
+    return True
+
+  print("The percent returns don't match for the portfolio")
+  if testReturns > validationReturns:
+    print("percent returns are too high.")
+
+  if testReturns < validationReturns:
+    print("percent returns are too low")
+
+  return False
+    
 
 def submit_adjusted_returns(adjusted_returns):
   validation_adjusted_returns = round(((100 + validation_returns) / (100 + validation_benchmark_returns) - 1) * 100,2)
   if round(adjusted_returns, 2) != validation_adjusted_returns:
     raise Exception("Adjusted returns don't line up.")
   print("{:.2f}% adjusted returns is still great!")
-  
-
-if __name__ == "__main__":
-  """A simple test of the api"""
-  print(submitLeaderboard("Brian", 1, "bbbbbbb"))
 
