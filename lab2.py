@@ -58,8 +58,7 @@ STEP 1: implement portfolio_value() (see comments above)
 """
 def portfolio_value(portfolio: Portfolio, date: date):
   total = 0
-  for holding in portfolio.get_all_stocknames():
-    total += get_historical_price(holding, date) * portfolio.get_share_count(holding)
+  # for ...
   return total
 
 """
@@ -67,10 +66,10 @@ STEP 2: implement portfolio_returns() (see comments above)
 """
 def portfolio_returns(portfolio: Portfolio, startDate: date, endDate: date):
   # Calculate the value for the potfolio at its open date
-  opening_value = portfolio_value(portfolio, startDate)
+  # opening_value = ...
 
   # Calculate the value for the portfolio today
-  close_value = portfolio_value(portfolio, endDate)
+  # close_value = ...
 
   # Calculate the percentage change since opening
-  return ((close_value / opening_value) - 1) * 100
+  return 0

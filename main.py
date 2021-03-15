@@ -76,7 +76,7 @@ def run_labs():
     lab2Part1Success = submit_portfolio_value(openingValue, portfolio, YEAR_START_2020)
     if not lab2Part1Success:
       print("Lab 2 failed")
-      print("There's something wrong with the 'portfolio_returns' function")
+      print("There's something wrong with the 'portfolio_value' function")
       set_lab_success("lab2.py", False)
       return 
     
